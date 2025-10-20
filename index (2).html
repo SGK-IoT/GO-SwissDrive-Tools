@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GSP SwissDrive Tools</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        /* --- UNIFIED DESIGN SYSTEM --- */
+        :root {
+            --primary-color: #00ff41;
+            --background-color: #0a0a0a;
+            --secondary-bg: #111111;
+            --input-bg: #222222;
+            --button-bg: #1a1a1a;
+            --button-hover: #2a2a2a;
+            --border-color: rgba(0, 255, 65, 0.3);
+            --neon-glow: 0 0 10px #00ff41, 0 0 20px rgba(0, 255, 65, 0.6), 0 0 30px rgba(0, 255, 65, 0.4);
+            --text-glow: 0 0 8px rgba(0, 255, 65, 0.7);
+        }
+
+        /* --- GENERAL & SHARED STYLES --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            line-height: 1.6;
+            background-image: repeating-linear-gradient(0deg, rgba(0, 255, 0, 0.04) 1px, transparent 1px, transparent 2px),
+                              repeating-linear-gradient(90deg, rgba(0, 255, 0, 0.04) 1px, transparent 1px, transparent 2px);
+            background-size: 20px 20px;
+        }
+        
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.1), 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- TABS --- */
+        .tabs { overflow: hidden; border-bottom: 2px solid var(--primary-color); margin-bottom: 20px; }
+        .tab-link { background-color: transparent; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 1em; color: var(--primary-color); font-family: 'Courier New', monospace; border-right: 1px solid var(--border-color); }
+        .tab-link:hover { background-color: var(--button-hover); }
+        .tab-link.active { background-color: var(--primary-color); color: #000; text-shadow: 0 0 5px #000; }
+        .tab-content { display: none; animation: fadeIn 0.8s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- SHARED COMPONENT STYLES --- */
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--primary-color);
+            text-shadow: var(--text-glow);
+            animation: pulse 3s infinite alternate;
+            font-size: 1.8rem;
+        }
+        @keyframes pulse { 0% { opacity: 0.8; } 100% { opacity: 1; text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color); } }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            text-shadow: var(--text-glow);
+        }
+        
+        .input-group { margin-bottom: 20px; }
+        
+        select, input[type="text"], input[type="email"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--primary-color);
+            text-shadow: var(--text-glow);
+            transition: all 0.3s;
+            outline: none;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+        }
+        
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%2300ff41" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 20px;
+            padding-right: 45px;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px var(--primary-color);
+        }
+        
+        .btn, button {
+            background-color: var(--button-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            padding: 12px 20px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-shadow: var(--text-glow);
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover, button:hover {
+            background-color: var(--button-hover);
+            box-shadow: var(--neon-glow);
+        }
+        
+        .btn:disabled, button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .warning { background: rgba(50, 25, 0, 0.4); border: 1px dashed #ffa500; color: #ffa500; padding: 15px; margin-bottom: 25px; border-radius: 5px; text-align: center; }
+        .status { margin-top: 20px; padding: 12px; border-left: 4px solid var(--primary-color); background: var(--input-bg); color: var(--primary-color); word-wrap: break-word; border-radius: 0 5px 5px 0; }
+        .status.error { border-left-color: #ff3333; color: #ff3333; }
+        
+        /* --- GSP Generator Specifics --- */
+        .control-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+            align-items: start; /* THIS IS THE FIX for the vertical alignment */
+        }
+        .slider-container { display: flex; align-items: center; gap: 15px; }
+        input[type="range"] { flex-grow: 1; -webkit-appearance: none; appearance: none; height: 4px; background: var(--border-color); border-radius: 2px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 25px; height: 25px; background: var(--primary-color); border: 2px solid var(--background-color); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px var(--primary-color); transition: 0.2s; }
+        #pushAidValue { font-size: 1.1em; font-weight: bold; color: var(--primary-color); text-shadow: var(--text-glow); }
+
+        /* --- GSP Decryptor Specifics --- */
+        .info-box { border: 1px dashed var(--border-color); background-color: rgba(0, 30, 0, 0.3); border-radius: 5px; padding: 15px; margin-bottom: 20px; }
+        .upload-area { border: 2px dashed var(--border-color); padding: 40px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: all 0.3s; border-radius: 5px; background: rgba(0, 50, 0, 0.2); }
+        .upload-area:hover, .upload-area.dragover { background: rgba(0, 100, 0, 0.3); border-color: var(--primary-color); box-shadow: 0 0 15px rgba(0, 255, 0, 0.2); }
+        .output { background: var(--input-bg); border: 1px solid var(--border-color); padding: 20px; margin-top: 20px; font-size: 0.9em; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; border-radius: 5px; }
+        .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .file-info { margin-top: 15px; border: 1px solid var(--border-color); padding: 10px; background: var(--input-bg); border-radius: 5px; color: var(--primary-color); }
+        
+        /* --- License Generator Specifics --- */
+        #License .app-container { max-width: 600px; margin: 0 auto; padding: 0; }
+        #License .input-group, #License .features-container, #License .button-container, #License .output-container, #License #install-path-info {
+            margin-bottom: 25px;
+        }
+        #License .status { margin-top: 0; }
+        
+        .features-container { 
+            border: 1px solid var(--border-color);
+            padding: 15px; 
+            border-radius: 5px; 
+        }
+        .features-title { margin-bottom: 15px; opacity: 0.8; }
+        .checkbox-container { display: flex; align-items: center; margin-bottom: 10px; cursor: pointer; }
+        .checkbox-container input { width: auto; margin-right: 12px; flex-shrink: 0; }
+        .checkbox-container label { font-weight: normal; margin-bottom: 0; }
+        .button-container { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 0; }
+        .output-container { background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 5px; padding: 15px; min-height: 100px; word-break: break-all; overflow-y: auto; max-height: 150px; }
+        .output-text { color: var(--primary-color); text-shadow: var(--text-glow); font-family: 'Courier New', monospace; white-space: pre-wrap; }
+        #install-path-info { display: none; }
+        #install-path-info.show { display: block; }
+        .path-highlight { color: #ffa500; text-shadow: 0 0 10px rgba(255, 165, 0, 0.7); }
+        .link-buttons { position: fixed; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
+        .link-button { background-color: var(--button-bg); color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: 5px; padding: 10px 15px; display: flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; }
+        .link-button:hover { background-color: var(--button-hover); box-shadow: var(--neon-glow); }
+        .glow-effect { animation: glow-pulse 1.5s infinite alternate; }
+        @keyframes glow-pulse { from { box-shadow: 0 0 5px var(--primary-color); } to { box-shadow: 0 0 20px var(--primary-color); } }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-link active" onclick="openTool(event, 'Generator')">GSP Generator</button>
+            <button class="tab-link" onclick="openTool(event, 'Decryptor')">GSP Decryptor</button>
+            <button class="tab-link" onclick="openTool(event, 'License')">Lizenzgenerator</button>
+        </div>
+
+        <!-- TAB 1: GSP GENERATOR -->
+        <div id="Generator" class="tab-content">
+            <h1>GSP ADVANCED GENERATOR</h1>
+            <div class="warning">NUR FÜR FORSCHUNGSZWECKE! Änderungen der Geschwindigkeit sind im Geltungsbereich der StVZO nicht zulässig und können den Motor beschädigen.</div>
+            <div class="control-grid">
+                <div class="input-group">
+                    <label for="wheelSizeSelector">1. Radgröße:</label>
+                    <select id="wheelSizeSelector">
+                        <option value="20">20 Zoll (406mm)</option><option value="24">24 Zoll (507mm)</option><option value="26" selected>26 Zoll (559mm)</option><option value="27.5">27.5 Zoll (584mm)</option><option value="28">28 Zoll / 700c (622mm)</option><option value="29">29 Zoll (622mm)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="maxSpeedSelector">2. Max. Geschwindigkeit (km/h):</label>
+                    <select id="maxSpeedSelector">
+                        <option value="20">20 km/h</option><option value="25" selected>25 km/h (Pedelec)</option><option value="32">32 km/h</option><option value="35">35 km/h</option><option value="40">40 km/h</option><option value="45">45 km/h (S-Pedelec)</option>
+                    </select>
+                </div>
+                 <div class="input-group" style="grid-column: 1 / -1;">
+                    <label for="pushAidSlider">3. Schiebehilfe-Geschwindigkeit:</label>
+                    <div class="slider-container">
+                        <input type="range" id="pushAidSlider" min="3" max="25" value="6" step="0.5"><span id="pushAidValue">6.0 km/h</span>
+                    </div>
+                </div>
+                <div class="input-group" style="grid-column: 1 / -1;">
+                    <label for="powerSelector">4. Motorleistung:</label>
+                    <select id="powerSelector">
+                        <option value="standard">Standard (60A Motor / 20A Batterie)</option><option value="high">Hohe Leistung (80A Motor / 30A Batterie)</option>
+                    </select>
+                </div>
+            </div>
+            <div style="text-align:center;">
+                 <button class="btn" id="generateBtn">💾 .GSP Datei Generieren</button>
+            </div>
+            <div id="generator-status" class="status" style="display:none;"></div>
+        </div>
+
+        <!-- TAB 2: GSP DECRYPTOR / ENCRYPTOR -->
+        <div id="Decryptor" class="tab-content">
+            <h1>GSP DECRYPTOR / ENCRYPTOR</h1>
+            <div class="warning">NUR FÜR SCHULUNGS- UND FORSCHUNGSZWECKE! VERWENDUNG AUF EIGENE GEFAHR.</div>
+            <div class="info-box"><p>→ Entschlüsselt/Verschlüsselt .GSP Parameterdateien.<br>→ Unterstützt die Verarbeitung mehrerer Dateien gleichzeitig.</p></div>
+            <div class="upload-area" id="uploadArea"><p style="font-size: 1.2em; margin-bottom: 10px;">▼ DATEI(EN) HIER ABLEGEN ▼</p><p>oder klicken, um auszuwählen</p><input type="file" id="fileInput" accept=".gsp,.msp,.txt" multiple></div>
+            <div id="fileInfo" class="file-info" style="display:none;"></div>
+            <div class="controls"><button class="btn" id="decryptBtn" disabled>🔓 Entschlüsseln</button><button class="btn" id="encryptBtn" disabled>🔒 Verschlüsseln</button><button class="btn" id="clearBtn">🗑️ Löschen</button></div>
+            <div id="output" class="output" style="display: none;"></div>
+        </div>
+
+        <!-- TAB 3: LICENSE GENERATOR -->
+        <div id="License" class="tab-content">
+            <div class="link-buttons">
+                <a href="https://github.com/SGK-IoT/GO-SwissDrive-Keygen" target="_blank" class="link-button"><i class="fab fa-github"></i> GitHub</a>
+                <a href="https://github.com/SGK-IoT/GO-SwissDrive-Keygen/wiki" target="_blank" class="link-button"><i class="fas fa-book"></i> Anleitung</a>
+            </div>
+            <div id="root"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- SHARED LOGIC & UTILITIES ---
+        const KEY = "(c) Copyright 1998-2012 Dipl.Ing.T.Strothmann electronics";
+        function encryptGSP(data) { const result = []; let keyPos = 0, byteCount = 0; for (let i = 0; i < data.length; i++) { const plainByte = data[i]; const keyByte = KEY.charCodeAt(keyPos % KEY.length); const encryptedByte = (byteCount ^ keyByte ^ plainByte) & 0xFF; result.push(encryptedByte); keyPos++; if (keyPos >= KEY.length) keyPos = 0; if (plainByte === 0x0A) { keyPos = 0; byteCount = 0; } else { byteCount++; } } return new Uint8Array(result); }
+        function decryptGSP(data) { const result = []; let keyPos = 0, byteCount = 0; for (let i = 0; i < data.length; i++) { const encryptedByte = data[i]; const keyByte = KEY.charCodeAt(keyPos % KEY.length); const decryptedByte = (byteCount ^ keyByte ^ encryptedByte) & 0xFF; result.push(decryptedByte); keyPos++; if (keyPos >= KEY.length) keyPos = 0; if (decryptedByte === 0x0A) { keyPos = 0; byteCount = 0; } else { byteCount++; } } return new Uint8Array(result); }
+
+        // --- TAB SWITCHING LOGIC ---
+        function openTool(evt, toolName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+            tablinks = document.getElementsByClassName("tab-link");
+            for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+            document.getElementById(toolName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        document.addEventListener('DOMContentLoaded', () => { document.getElementById('Generator').style.display = 'block'; });
+
+        // --- GSP GENERATOR LOGIC (Scoped) ---
+        (function() {
+            const wheelSizeSelector = document.getElementById('wheelSizeSelector'); const maxSpeedSelector = document.getElementById('maxSpeedSelector'); const pushAidSlider = document.getElementById('pushAidSlider'); const pushAidValue = document.getElementById('pushAidValue'); const powerSelector = document.getElementById('powerSelector'); const generateBtn = document.getElementById('generateBtn'); const statusDiv = document.getElementById('generator-status');
+            const baseConfigTemplate = `Configuration software for Smart GB motors V0.40.2.1 (c) 5/2005 - 2/2012 T.Strothmann Elektronik\r\n4253296042\tLicense\r\n39\tMinVersion\r\n55\tMaxVersion\r\n0\tMinSerial\r\n4294967295\tMaxSerial\r\n0\tMinChksum\r\n65535\tMaxChksum\r\n61811\tConfig2\r\n6160\tBusAddr\r\n0\tIOStyle\r\n65535\tUserIDLo\r\n65535\tUserIDHi\r\n3\tFileIDLo\r\n65024\tFileIDHi\r\n52336\tFWChksum\r\n55\tVersion\r\n65535\tSerialLo\r\n65535\tSerialHi\r\n0\tAllErrBits\r\n0\tErrCode\r\n0\tErrValue1\r\n0\tErrValue2\r\n39882\tMaxFwdSpeed\r\n5200\tMaxRevSpeed\r\n9030\tMaxEFwdSpeed\r\n9030\tMaxERevSpeed\r\n50\tActivateSpeed\r\n1024\tAccelSpeedStop\r\n31785\tLoopGain\r\n90\tInnerFilter\r\n30\tAccInnerFilter\r\n100\tTremorRange\r\n65535\tFwdAccel\r\n65535\tFwdDecel\r\n65535\tRevAccel\r\n53687\tRevDecel\r\n7158\tSlamDecel\r\n0\tSlamStopTime\r\n0\tLatchTime\r\n0\tLatchDecel\r\n1538\tConfig\r\n12288\tScaleYPos\r\n4096\tScaleYNeg\r\n65535\tScaleXPos\r\n0\tScaleXNeg\r\n5\tDeadbandY\r\n20\tDeadbandX\r\n5\tHysteresisY\r\n10\tHysteresisX\r\n2048\tNeutralY\r\n2000\tNeutralX\r\n3584\tUpperLimitY\r\n512\tLowerLimitY\r\n2500\tUpperLimitX\r\n1500\tLowerLimitX\r\n1\tBrkHoldoff\r\n50\tDropinCurrent\r\n312\tBrakesOnTime\r\n625\tBrakesOffTime\r\n883\tBrakeVoltage\r\n3125\tLowVoltageTime\r\n1000\tRegenBrakeSpeed\r\n20\tPolePairs\r\n372\tMaxRPM\r\n0\tTTReserved1\r\n10737\tEmergDecel\r\n25000\tStallMaxTime\r\n64512\tStallMinMove\r\n40\tStallCurrent\r\n20\tMinBattCurrLimit\r\n60\tMinCurrLimit\r\n7\tChCurrLimit\r\n200\tMaxAmbTemp\r\n2135\tMinDischarge\r\n3313\tMaxCharge\r\n3769781154\tTrailer\r\n`;
+            const MAX_PARAM_VALUE = 65535; const wheelCircumferences = {'20':406+2*50,'24':507+2*50,'26':559+2*55,'27.5':584+2*55,'28':622+2*45,'29':622+2*55}; const SPEED_CALC_CONSTANT = 2.06e9; const PUSH_AID_CALC_CONSTANT = 1.88e7;
+            pushAidSlider.addEventListener('input', () => { pushAidValue.textContent = `${parseFloat(pushAidSlider.value).toFixed(1)} km/h`; }); maxSpeedSelector.addEventListener('change', updatePushAidSliderRange); generateBtn.addEventListener('click', generateAndDownload); document.addEventListener('DOMContentLoaded', updatePushAidSliderRange);
+            function updatePushAidSliderRange() { const newMax = parseFloat(maxSpeedSelector.value); pushAidSlider.max = newMax; if (parseFloat(pushAidSlider.value) > newMax) { pushAidSlider.value = newMax; } pushAidValue.textContent = `${parseFloat(pushAidSlider.value).toFixed(1)} km/h`; }
+            function modifyParameter(configText, paramName, newValue) { return configText.replace(new RegExp(`^(\\d+)(\\t${paramName}\\r?\\n)`, 'm'), `${newValue}$2`); }
+            function showStatus(message) { statusDiv.textContent = message; statusDiv.style.display = 'block'; }
+            function generateAndDownload() { let configText = baseConfigTemplate; const wheelSize = wheelSizeSelector.value; const maxSpeed = parseFloat(maxSpeedSelector.value); const circumference = wheelCircumferences[wheelSize]; let newMaxFwdSpeed = (maxSpeed >= 45) ? MAX_PARAM_VALUE : Math.round(SPEED_CALC_CONSTANT / (maxSpeed * circumference)); configText = modifyParameter(configText, 'MaxFwdSpeed', Math.min(newMaxFwdSpeed, MAX_PARAM_VALUE)); const newPushAidValue = Math.round((PUSH_AID_CALC_CONSTANT / circumference) * (6.0 / parseFloat(pushAidSlider.value))); configText = modifyParameter(configText, 'MaxEFwdSpeed', newPushAidValue); configText = modifyParameter(configText, 'MaxERevSpeed', newPushAidValue); const { battLimit, currLimit } = (powerSelector.value === 'high') ? { battLimit: 30, currLimit: 80 } : { battLimit: 20, currLimit: 60 }; configText = modifyParameter(configText, 'MinBattCurrLimit', battLimit); configText = modifyParameter(configText, 'MinCurrLimit', currLimit); const encryptedData = encryptGSP(new TextEncoder().encode(configText)); const blob = new Blob([encryptedData], { type: 'application/octet-stream' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `gsp_config_${wheelSize}in_${maxSpeed}kmh_${currLimit}A.gsp`; a.click(); URL.revokeObjectURL(url); showStatus(`✓ Datei erfolgreich generiert: ${a.download}`); }
+        })();
+
+        // --- GSP DECRYPTOR LOGIC (Scoped) ---
+        (function() {
+            let selectedFiles = []; const uploadArea = document.getElementById('uploadArea'); const fileInput = document.getElementById('fileInput'); const decryptBtn = document.getElementById('decryptBtn'); const encryptBtn = document.getElementById('encryptBtn'); const clearBtn = document.getElementById('clearBtn'); const fileInfoDiv = document.getElementById('fileInfo'); const outputDiv = document.getElementById('output');
+            uploadArea.addEventListener('click', () => fileInput.click()); uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); }); uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); }); uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); if (e.dataTransfer.files.length) { handleFiles(e.dataTransfer.files); } }); fileInput.addEventListener('change', (e) => { if (e.target.files.length) { handleFiles(e.target.files); } });
+            decryptBtn.addEventListener('click', () => processFiles('decrypt')); encryptBtn.addEventListener('click', () => processFiles('encrypt')); clearBtn.addEventListener('click', clearAll);
+            function handleFiles(fileList) { if (!fileList.length) return; selectedFiles = []; const readPromises = Array.from(fileList).map(file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = (e) => resolve({ name: file.name, data: new Uint8Array(e.target.result) }); reader.onerror = reject; reader.readAsArrayBuffer(file); })); Promise.all(readPromises).then(files => { selectedFiles = files; fileInfoDiv.innerHTML = `<b>${files.length} Datei(en) geladen:</b><br>${files.map(f => f.name).join('<br>')}`; fileInfoDiv.style.display = 'block'; decryptBtn.disabled = false; encryptBtn.disabled = false; outputDiv.textContent = "Bereit zur Verarbeitung..."; outputDiv.style.display = 'block'; }).catch(error => { outputDiv.textContent = 'FEHLER: Mindestens eine Datei konnte nicht gelesen werden.'; outputDiv.style.display = 'block'; }); }
+            function processFiles(operation) { if (!selectedFiles.length) return; const isEncrypt = operation === 'encrypt'; const actionText = isEncrypt ? 'VERSCHLÜSSELT' : 'ENTSCHLÜSSELT'; const outputLog = []; let successCount = 0; selectedFiles.forEach(file => { try { const processedData = isEncrypt ? encryptGSP(file.data) : decryptGSP(file.data); downloadSingleFile(processedData, file.name, operation); outputLog.push(`✓ ERFOLG: ${file.name} wurde ${actionText}.`); successCount++; } catch (err) { outputLog.push(`✗ FEHLER bei ${file.name}: ${err.message}`); } }); outputDiv.innerHTML = `<b>Verarbeitungsergebnis (${successCount}/${selectedFiles.length} erfolgreich):</b><br>${outputLog.join('<br>')}`; }
+            function downloadSingleFile(data, originalName, operation) { const blob = new Blob([data], { type: 'application/octet-stream' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); const nameWithoutExt = originalName.replace(/\.[^/.]+$/, ''); const extension = operation === 'decrypt' ? '_entschlüsselt.txt' : '_verschlüsselt.gsp'; a.href = url; a.download = nameWithoutExt + extension; a.click(); URL.revokeObjectURL(url); }
+            function clearAll() { selectedFiles = []; fileInput.value = ''; outputDiv.style.display = 'none'; fileInfoDiv.style.display = 'none'; decryptBtn.disabled = true; encryptBtn.disabled = true; }
+        })();
+    </script>
+    
+    <!-- LICENSE GENERATOR REACT/BABEL SCRIPT -->
+    <script type="text/babel">
+    const KeygenApp = () => {
+        const FIXED_SALT = "0Ox.|${,&bJu0|(j]";
+        const PERMISSION_LEVEL_SALTS = { "DEALER": "2", "OEM": "4", "SERVICE/GOD": "8", "DEVELOPER": "20" };
+        const FEATURE_MODUS_MAP_INTERNAL = { "Stromstufen": 16, "SchiebehilfeRueckwaerts": 32, };
+        const UI_FEATURE_DISPLAY_NAMES = { "Stromstufen": "Stromstufen", "Schiebehilfe Rückwärts": "SchiebehilfeRueckwaerts", };
+        const getHexHash = (inputString) => CryptoJS.SHA1(inputString).toString(CryptoJS.enc.Hex);
+        const formatLicenseKey = (hexHash) => { if (hexHash.length !== 40) throw new Error("Input-Hash muss 40 Zeichen lang sein."); return hexHash.match(/.{1,5}/g).join('-').toUpperCase(); };
+        const generateLicenseKey = (email, baseLevelSalt, selectedFeatures) => {
+            if (!email || !baseLevelSalt) throw new Error("E-Mail und Basislevel dürfen nicht leer sein.");
+            const modusBase = parseInt(baseLevelSalt, 10);
+            let modusFeatures = 0;
+            selectedFeatures.forEach(key => { modusFeatures |= FEATURE_MODUS_MAP_INTERNAL[key] || 0; });
+            const finalModus = modusBase | modusFeatures;
+            const stringToHash = email + FIXED_SALT + finalModus.toString();
+            const hexHash = getHexHash(stringToHash);
+            return { licenseKey: formatLicenseKey(hexHash), finalModus };
+        };
+
+        const [email, setEmail] = React.useState('');
+        const [level, setLevel] = React.useState('DEALER');
+        const [features, setFeatures] = React.useState({ Stromstufen: false, SchiebehilfeRueckwaerts: false });
+        const [generatedKey, setGeneratedKey] = React.useState('');
+        const [status, setStatus] = React.useState({ message: 'Bereit.', isError: false });
+        const [generatedEmail, setGeneratedEmail] = React.useState('');
+
+        const handleFeatureChange = (feature) => setFeatures(prev => ({ ...prev, [feature]: !prev[feature] }));
+        const setStatusMessage = (message, isError = false) => setStatus({ message: `>> ${message}`, isError });
+
+        const generateAction = async () => {
+            setGeneratedKey(''); setGeneratedEmail('');
+            const emailValue = email.trim();
+            if (!emailValue) { setStatusMessage('FEHLER: E-Mail fehlt!', true); return; }
+            const baseLevelSalt = PERMISSION_LEVEL_SALTS[level];
+            const selectedInternalFeatureKeys = Object.keys(features).filter(key => features[key]);
+            try {
+                setStatusMessage('Generiere Schlüssel...');
+                const { licenseKey, finalModus } = generateLicenseKey(emailValue, baseLevelSalt, selectedInternalFeatureKeys);
+                setGeneratedKey(licenseKey); setGeneratedEmail(emailValue);
+                setStatusMessage(`Schlüssel für '${emailValue}' generiert. Modus: ${finalModus}`);
+            } catch (error) { setStatusMessage(`FEHLER: ${error.message}`, true); }
+        };
+        const copyToClipboard = () => { if (!generatedKey) return; navigator.clipboard.writeText(generatedKey).then(() => setStatusMessage(`Schlüssel in Zwischenablage kopiert.`)).catch(() => setStatusMessage('FEHLER: Kopieren fehlgeschlagen.', true)); };
+        const saveAsAction = () => {
+            if (!generatedKey || !generatedEmail) return;
+            const isDeveloper = level === "DEVELOPER";
+            const emailPrefix = generatedEmail.split('@')[0].replace(/[^a-z0-9]/gi, '_');
+            let defaultFilename = isDeveloper ? "licence.txt" : `${emailPrefix}_${level}_lizenz.txt`.toLowerCase();
+            const licenseContent = `${generatedEmail}\n${generatedKey}\n`;
+            const blob = new Blob([licenseContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = defaultFilename; a.click();
+            URL.revokeObjectURL(url);
+            const infoBox = document.getElementById('install-path-info');
+            if (infoBox) infoBox.className = isDeveloper ? "info-box warning show" : "info-box warning";
+            setStatusMessage(`Gespeichert: ${defaultFilename}`);
+        };
+
+        return (
+            <div className="app-container">
+                <h1>GO SwissDrive Lizenzgenerator</h1>
+                <div className="input-group">
+                    <label htmlFor="email">E-Mail:</label>
+                    <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && generateAction()} />
+                </div>
+                <div className="input-group">
+                    <label htmlFor="level">Basislevel:</label>
+                    <select id="level" value={level} onChange={(e) => setLevel(e.target.value)}>
+                        {Object.keys(PERMISSION_LEVEL_SALTS).map(levelKey => <option key={levelKey} value={levelKey}>{levelKey}</option>)}
+                    </select>
+                </div>
+                <div className="features-container">
+                    <div className="features-title">(Nur für Versionen älter als 4.1.3)</div>
+                    {Object.entries(UI_FEATURE_DISPLAY_NAMES).map(([displayName, internalKey]) => (
+                        <label key={internalKey} className="checkbox-container">
+                            <input type="checkbox" id={internalKey} checked={features[internalKey] || false} onChange={() => handleFeatureChange(internalKey)} />
+                            {displayName}
+                        </label>
+                    ))}
+                </div>
+                <div className="button-container">
+                    <button onClick={generateAction} className="glow-effect">Generieren</button>
+                    <button onClick={copyToClipboard} disabled={!generatedKey} className={generatedKey ? "glow-effect" : ""}>Kopieren</button>
+                    <button onClick={saveAsAction} disabled={!generatedKey} className={generatedKey ? "glow-effect" : ""}>Speichern</button>
+                </div>
+                <div className="output-container"><div className="output-text">{generatedKey}</div></div>
+                <div id="install-path-info" className="info-box warning">
+                    <p><b>WICHTIG:</b> Für die DEVELOPER-Lizenz muss die Datei in folgenden Pfad kopiert werden:</p>
+                    <p className="path-highlight" style={{marginTop:'5px'}}>%APPDATA%\GO SwissDrive GmbH\Servicetool_4\licence.txt</p>
+                </div>
+                <div className={`status ${status.isError ? 'error' : ''}`}>{status.message}</div>
+            </div>
+        );
+    };
+    ReactDOM.render(<KeygenApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
